@@ -6,7 +6,7 @@ const fs = require("fs");
 
 const app = express();
 
-// استخدام مجلد /tmp الخاص بـ Vercel لأنه المجلد الوحيد المسموح بالكتابة فيه
+// Vercel مسموح فقط بالكتابة في مجلد /tmp
 const upload = multer({ dest: "/tmp/" });
 
 app.get("/", (req, res) => {
@@ -18,24 +18,28 @@ app.post("/docxtopdf", upload.single("word"), (req, res) => {
         return res.status(400).send("يرجى رفع ملف أولاً.");
     }
 
-    // تحديد مسار الملف المرفوع ومسار الملف الناتج في المجلد المؤقت
+    // تحديد مسارات ديناميكية داخل المجلد المؤقت
     const inputPath = req.file.path;
     const outputPath = path.join("/tmp", Date.now() + "output.pdf");
 
-    // عملية التحويل باستخدام المسارات الديناميكية
+    // عملية التحويل الاحترافية
     wordConverter(inputPath, outputPath, function (err, result) {
         if (err) {
-            console.log(err);
-            return res.status(500).send("خطأ في تحويل الملف.");
+            console.error(err);
+            return res.status(500).send("حدث خطأ أثناء تحويل الملف.");
         }
         
-        // إرسال الملف للمستخدم للتحميل
-        res.download(outputPath, (err) => {
-            if (err) console.log(err);
+        // إرسال الملف الناتج للمستخدم
+        res.download(outputPath, (downloadErr) => {
+            if (downloadErr) console.error(downloadErr);
             
-            // تنظيف الملفات المؤقتة بعد التحميل للحفاظ على الأداء
-            if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-            if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+            // تنظيف الملفات فوراً بعد التحميل للحفاظ على الخصوصية والمساحة
+            try {
+                if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+                if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+            } catch (cleanupErr) {
+                console.error("Cleanup error:", cleanupErr);
+            }
         });
     });
 });
