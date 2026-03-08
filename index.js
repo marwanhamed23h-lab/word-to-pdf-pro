@@ -6,7 +6,7 @@ const fs = require("fs");
 
 const app = express();
 
-// Vercel مسموح فقط بالكتابة في مجلد /tmp
+// استخدام مجلد /tmp المخصص للملفات المؤقتة في Vercel
 const upload = multer({ dest: "/tmp/" });
 
 app.get("/", (req, res) => {
@@ -15,30 +15,30 @@ app.get("/", (req, res) => {
 
 app.post("/docxtopdf", upload.single("word"), (req, res) => {
     if (!req.file) {
-        return res.status(400).send("يرجى رفع ملف أولاً.");
+        return res.status(400).send("يرجى اختيار ملف أولاً.");
     }
 
-    // تحديد مسارات ديناميكية داخل المجلد المؤقت
+    // تحديد مسار الملف المرفوع ومسار الملف الناتج
     const inputPath = req.file.path;
-    const outputPath = path.join("/tmp", Date.now() + "output.pdf");
+    const outputPath = path.join("/tmp", Date.now() + ".pdf");
 
-    // عملية التحويل الاحترافية
+    // عملية التحويل باستخدام الملف المرفوع فعلياً
     wordConverter(inputPath, outputPath, function (err, result) {
         if (err) {
             console.error(err);
-            return res.status(500).send("حدث خطأ أثناء تحويل الملف.");
+            return res.status(500).send("فشل التحويل، تأكد من سلامة ملف Word.");
         }
         
-        // إرسال الملف الناتج للمستخدم
+        // إرسال الـ PDF للمستخدم
         res.download(outputPath, (downloadErr) => {
             if (downloadErr) console.error(downloadErr);
             
-            // تنظيف الملفات فوراً بعد التحميل للحفاظ على الخصوصية والمساحة
+            // حذف الملفات فوراً بعد التحميل لتجنب امتلاء الذاكرة
             try {
                 if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
                 if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-            } catch (cleanupErr) {
-                console.error("Cleanup error:", cleanupErr);
+            } catch (e) {
+                console.log("Cleanup error");
             }
         });
     });
@@ -46,5 +46,5 @@ app.post("/docxtopdf", upload.single("word"), (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`App is listening on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
