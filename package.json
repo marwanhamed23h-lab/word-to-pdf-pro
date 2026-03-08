@@ -1,6 +1,7 @@
 {
-  "name": "pro-word-to-pdf",
+  "name": "word-to-pdf-converter",
   "version": "1.0.0",
+  "description": "Professional Word to PDF Converter",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
