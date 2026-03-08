@@ -6,7 +6,7 @@ const fs = require("fs");
 
 const app = express();
 
-// استخدام مجلد /tmp المخصص للملفات المؤقتة في الاستضافات السحابية
+// إعداد multer لاستخدام المجلد المؤقت الخاص بـ Vercel
 const upload = multer({ dest: "/tmp/" });
 
 app.get("/", (req, res) => {
@@ -15,21 +15,19 @@ app.get("/", (req, res) => {
 
 app.post("/docxtopdf", upload.single("word"), (req, res) => {
     if (!req.file) {
-        return res.status(400).send("يرجى اختيار ملف Word أولاً.");
+        return res.status(400).send("يرجى اختيار ملف أولاً.");
     }
 
-    // تحديد مسار الملف الذي رفعه المستخدم والمسار الجديد للـ PDF
     const inputPath = req.file.path;
     const outputPath = path.join("/tmp", Date.now() + ".pdf");
 
-    // تحويل الملف المرفوع فعلياً وليس ملفاً ثابتاً
+    // عملية التحويل باستخدام الملف المرفوع فعلياً
     wordConverter(inputPath, outputPath, function (err, result) {
         if (err) {
             console.error(err);
             return res.status(500).send("فشل التحويل. تأكد من أن الملف سليم.");
         }
         
-        // إرسال الملف الناتج للمستخدم للتحميل
         res.download(outputPath, (downloadErr) => {
             if (downloadErr) console.error(downloadErr);
             
@@ -44,7 +42,7 @@ app.post("/docxtopdf", upload.single("word"), (req, res) => {
     });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
